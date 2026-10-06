@@ -1,0 +1,49 @@
+# A more detailed description of the manifest format `Bender.yml` can be found here:
+# https://github.com/pulp-platform/bender#manifest-format-benderyml
+
+package:
+  name: ahb-crossbar-ip
+  authors:
+    - "AresIFX <>"
+
+dependencies:
+
+sources:
+  # Source files grouped in levels. Files in level 0 have no dependencies on files in this
+  # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
+  # levels 1 and 0, etc. Files within a level are ordered alphabetically.
+  # Level 0
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_AddressDecoder_MasterInterface_0.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_AddressDecoder_MasterInterface_1.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_AddressDecoder_MasterInterface_2.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ArbitrationUnit_SlaveInterface_A.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ArbitrationUnit_SlaveInterface_B.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ArbitrationUnit_SlaveInterface_C.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ArbitrationUnit_SlaveInterface_D.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ArbitrationUnit_SlaveInterface_E.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ErrorDetection_MasterInterface_0_StallFSM.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ErrorDetection_MasterInterface_1_StallFSM.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ErrorDetection_MasterInterface_2_StallFSM.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_InputStage_MasterInterface_0.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_InputStage_MasterInterface_1.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_InputStage_MasterInterface_2.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_MasterSelect_SlaveInterface_A.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_MasterSelect_SlaveInterface_B.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_MasterSelect_SlaveInterface_C.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_MasterSelect_SlaveInterface_D.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_MasterSelect_SlaveInterface_E.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_SlaveSelect_MasterInterface_0.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_SlaveSelect_MasterInterface_1.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_SlaveSelect_MasterInterface_2.sv
+  - src/Top_RISCV_Subsystem_AddressDecoder.sv
+  - src/Top_RISCV_Subsystem_ArbitrationUnit.sv
+  - src/Top_RISCV_Subsystem_MasterSelect.sv
+  - src/Top_RISCV_Subsystem_SlaveSelect.sv
+
+  # Level 1
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ErrorDetection_MasterInterface_0.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ErrorDetection_MasterInterface_1.sv
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite_ErrorDetection_MasterInterface_2.sv
+
+  # Level 2
+  - src/Top_RISCV_Subsystem_AHB_Lite_AHB_Lite.sv
