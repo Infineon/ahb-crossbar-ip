@@ -29,12 +29,12 @@
       "cached": null,
       "iommu": null
     },
-    "interrupts": "Triggers Interrupts"
+    "interrupts": null
   },
   "microarchitecture": {
     "parametrization": {
-      "parametricNumUnits": null,
-      "parametricConfig": "RTL from a parametrized generator"
+      "parametricNumUnits": "RTL from a parametrized generator",
+      "parametricConfig": "No"
     },
     "programmability": {
       "programmableCores": null,
