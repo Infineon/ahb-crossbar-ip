@@ -1,0 +1,214 @@
+= AHB-Lite Crossbar User Documentation
+
+Three-Master, Six-Peripheral AHB-Lite Crossbar
+
+=== Introduction
+
+The AHB-Lite crossbar connects three independent AHB-Lite initiator
+interfaces to six peripheral interfaces. Address decoding selects the target
+peripheral for each transfer, while arbitration selects one initiator when
+multiple initiators request the same peripheral at the same time.
+
+Different initiators can access different peripherals in parallel. A transfer
+is routed only to its decoded peripheral, and the selected peripheral's
+response is routed back to the initiator that owns the transfer.
+
+The crossbar accepts single AHB-Lite transfers. It includes input staging for
+slave back-pressure and generates an error response for an address that does
+not match any configured peripheral window.
+
+=== Features
+
+** *AHB-Lite matrix:* three 32-bit data initiator interfaces and six 32-bit peripheral interfaces.
+
+** *Parallel accesses:* independent initiators can access different
+peripherals concurrently.
+
+** *Fixed-priority arbitration:* when initiators contend for one peripheral,
+Master 0 has the highest priority, followed by Master 1 and Master 2.
+
+** *Single transfers:* the implementation supports single, non-sequential transfers. Burst signaling is not implemented.
+
+** *Ready-based flow control:* `HREADY` and the peripheral-side `HREADYIN`
+signals propagate target back-pressure through the crossbar.
+
+** *Error response:* an unmapped address produces an AHB error response and a
+one-cycle stall sequence on the affected initiator path.
+
+** *Reset support:* the design provides functional reset and debug reset
+inputs.
+
+** *No locked transfers:* `HMASTLOCK` is not implemented. The crossbar does
+not provide AHB locked or atomic transfer handling.
+
+=== Architecture
+
+The crossbar contains an input stage, an address decoder, a master-selection
+path, an arbitration unit, and a slave-selection path for each initiator.
+Address decoding produces one peripheral selection. The master-selection and
+arbitration logic then determine which initiator owns the shared peripheral
+path. The selected transfer is driven to one peripheral, while the delayed
+selection routes the peripheral response to the correct initiator.
+
+The crossbar uses the `HTRANS` value `2'b10` (`NONSEQ`) to identify an active
+single transfer for arbitration. `IDLE`, `BUSY`, and `SEQ` transfers are not
+used to request arbitration. `HBURST` is absent, so incrementing or wrapping
+burst transactions are outside the supported interface.
+
+===== Interface Signals
+
+The top-level module is
+`Top_RISCV_Subsystem_AHB_Lite_AHB_Lite`. Each of the three initiator-side
+interfaces has the following signals:
+
+[cols="3*",options="header"]
+|===
+|Signal
+|Direction
+|Description
+|HADDR
+|Input
+|32-bit transfer address used by the address decoder.
+|HTRANS
+|Input
+|AHB transfer type. `NONSEQ` identifies a supported active transfer.
+|HSIZE
+|Input
+|Transfer size attribute forwarded to the selected peripheral.
+|HWRITE
+|Input
+|Transaction type: write when asserted, read when deasserted.
+|HWDATA
+|Input
+|Write data forwarded to the selected peripheral.
+|HPROT
+|Input
+|AHB protection and access attributes forwarded with the transfer.
+|HMASTER
+|Input
+|Initiator identification or master attribute forwarded to the peripheral.
+|HREADY
+|Output
+|Transfer completion and ready indication returned from the selected
+peripheral or error path.
+|HRESP
+|Output
+|AHB response returned by the selected peripheral; an unmapped address
+produces an error response.
+|HRDATA
+|Output
+|Read data returned by the selected peripheral.
+|===
+
+Each of the six peripheral-side interfaces receives the routed transfer
+signals `HADDR`, `HTRANS`, `HSIZE`, `HWRITE`, `HWDATA`, `HPROT`, and `HMASTER`,
+as well as `HSEL`. The peripheral returns `HREADY`, `HRESP`, and `HRDATA`.
+`HREADYIN` is provided on the peripheral side to qualify the ready state used
+by the crossbar's routing and staging logic.
+
+The common control signals are:
+
+[cols="3*",options="header"]
+|===
+|Signal
+|Direction
+|Description
+|clk
+|Input
+|Crossbar clock.
+|rst
+|Input
+|Functional reset for the crossbar state and delayed selections.
+|debug_ndmrst
+|Input
+|Debug reset control for the crossbar state and delayed selections.
+|===
+
+Signals not present in the top-level interface, including `HBURST` and
+`HMASTLOCK`, are not supported by this implementation.
+
+=== Arbitration
+
+Arbitration is applied when more than one initiator has an active transfer
+request for the same shared peripheral. The fixed priority order is:
+
+[cols="2,2,3",options="header"]
+|===
+|Priority
+|Initiator
+|Selection code
+|Highest
+|Master 0
+|`2'b01`
+|Middle
+|Master 1
+|`2'b10`
+|Lowest
+|Master 2
+|`2'b11`
+|===
+
+An initiator that is not selected is stalled until the selected transfer has
+completed. Requests targeting different peripherals can proceed through their
+independent matrix paths without contending for this arbitration decision.
+
+=== Peripheral Address Map
+
+The address decoder uses inclusive address ranges. The peripheral labels
+below match the top-level RTL interface names and decoder selection codes.
+
+[cols="1,2,2,2",options="header"]
+|===
+|Peripheral
+|Selection code
+|Start address
+|End address
+|C
+|`3'b001`
+|`0x0000_0000`
+|`0x0000_3FFF`
+|A
+|`3'b010`
+|`0x11FF_F800`
+|`0x1203_FFFF`
+|B
+|`3'b011`
+|`0x1800_0000`
+|`0x1800_7FFF`
+|D
+|`3'b100`
+|`0x4000_0000`
+|`0x47FF_FFFF`
+|E
+|`3'b101`
+|`0x4800_0000`
+|`0x5FFF_FFFF`
+|F
+|`3'b110`
+|`0x17FF_E000`
+|`0x17FF_FFFF`
+|===
+
+Addresses outside these ranges select no peripheral. Such a transfer follows
+the error-detection path and returns an AHB error response to the requesting
+initiator.
+
+=== Transfer Behavior
+
+For a supported transfer, the initiator supplies the address and control
+phase. The crossbar decodes `HADDR`, arbitrates if necessary, asserts `HSEL`
+for the selected peripheral, and forwards the transfer attributes. The
+peripheral may hold `HREADY` low to insert wait states. Once the peripheral
+completes the transfer, its `HRESP` and `HRDATA` are returned to the owning
+initiator.
+
+Because the crossbar is single-transfer oriented, software and upstream bus
+components must issue transfers without relying on burst sequencing or locked
+bus ownership.
+
+=== Integration Notes
+
+Connect each initiator-side interface to an AHB-Lite master and each
+peripheral-side interface to one AHB-Lite slave. Peripheral implementations
+must return valid `HREADY`, `HRESP`, and `HRDATA` values. The address map and
+the fixed arbitration priority are part of the integration contract.
